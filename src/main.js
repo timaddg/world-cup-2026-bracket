@@ -279,7 +279,7 @@ function renderPredictionForm() {
         ${
           submitted
             ? "Your picks are final for this display name and cannot be changed."
-            : "For each team, select exactly one place: 1st, 2nd, 3rd, or 4th. You can only submit once."
+            : "Pick one team per place in each group — only one 1st, one 2nd, one 3rd, and one 4th. Each team gets exactly one position."
         }
       </p>
       <div id="group-tables">
@@ -323,7 +323,8 @@ function renderPredictionForm() {
       if (btn) btn.disabled = d < t;
       if (btn) btn.textContent = `Save & submit my picks (${d}/${t})`;
     },
-    areGroupPicksLocked
+    areGroupPicksLocked,
+    escapeHtml
   );
 
   form.addEventListener("submit", async (e) => {

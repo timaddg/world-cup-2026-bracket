@@ -293,6 +293,10 @@ body {
   width: 4.5rem;
 }
 
+.pick-cell--muted .pick-radio__label {
+  opacity: 0.45;
+}
+
 .pick-radio {
   display: flex;
   flex-direction: column;

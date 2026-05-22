@@ -9,10 +9,10 @@ const POSITIONS = [
 ];
 
 /** order[0]=1st place team id, etc. */
-export function getOrderForGroup(userGroups, groupId, teams) {
+export function getOrderForGroup(userGroups, groupId) {
   const order = userGroups?.[groupId];
-  if (isGroupComplete(order)) return order;
-  return [null, null, null, null];
+  if (!order || order.length !== 4) return [null, null, null, null];
+  return [...order];
 }
 
 export function getRankForTeam(order, teamId) {
@@ -21,18 +21,30 @@ export function getRankForTeam(order, teamId) {
   return idx >= 0 ? idx : null;
 }
 
+/** Assign team to a position; that position and team are unique within the group */
 export function applyRankSelection(order, teamId, positionIndex) {
-  const next = [...(order ?? [null, null, null, null])];
+  const next = order?.length === 4 ? [...order] : [null, null, null, null];
 
   for (let i = 0; i < 4; i++) {
     if (next[i] === teamId) next[i] = null;
   }
 
-  if (positionIndex !== null && positionIndex >= 0) {
+  if (positionIndex >= 0 && positionIndex < 4) {
     next[positionIndex] = teamId;
   }
 
   return next;
+}
+
+export function orderFromPositionRadios(container, groupId) {
+  const order = [null, null, null, null];
+  for (const pos of POSITIONS) {
+    const checked = container.querySelector(
+      `input[name="rank-${groupId}-${pos.index}"]:checked`
+    );
+    if (checked) order[pos.index] = checked.value;
+  }
+  return order;
 }
 
 export function renderGroupTable(group, order, locked, escapeHtml) {
@@ -42,23 +54,26 @@ export function renderGroupTable(group, order, locked, escapeHtml) {
       const currentRank = getRankForTeam(order, team.id);
       const host = team.host ? ' <span class="host-tag">H</span>' : "";
 
-      const cells = POSITIONS.map(
-        (pos) => `
-        <td class="pick-cell">
+      const cells = POSITIONS.map((pos) => {
+        const takenByOther =
+          order[pos.index] && order[pos.index] !== team.id;
+        return `
+        <td class="pick-cell ${takenByOther ? "pick-cell--muted" : ""}">
           <label class="pick-radio">
             <input
               type="radio"
-              name="rank-${group.id}-${team.id}"
-              value="${pos.index}"
+              name="rank-${group.id}-${pos.index}"
+              value="${team.id}"
               data-group="${group.id}"
-              data-team="${team.id}"
+              data-position="${pos.index}"
               ${currentRank === pos.index ? "checked" : ""}
               ${locked ? "disabled" : ""}
+              aria-label="${team.name} ${pos.label}"
             />
             <span class="pick-radio__label">${pos.label}</span>
           </label>
-        </td>`
-      ).join("");
+        </td>`;
+      }).join("");
 
       return `
         <tr>
@@ -93,13 +108,36 @@ export function renderGroupTable(group, order, locked, escapeHtml) {
 export function buildPredictionFormHtml(userGroups, locked, escapeHtml) {
   return getGroups()
     .map((group) => {
-      const order = getOrderForGroup(userGroups, group.id, group.teams);
+      const order = getOrderForGroup(userGroups, group.id);
       return renderGroupTable(group, order, locked, escapeHtml);
     })
     .join("");
 }
 
-export function bindPredictionForm(container, getUser, persistGroup, onProgress, isLocked) {
+export function refreshGroupSection(
+  container,
+  groupId,
+  order,
+  locked,
+  escapeHtml
+) {
+  const group = getGroups().find((g) => g.id === groupId);
+  const section = container.querySelector(`#group-${groupId}`);
+  if (!group || !section) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = renderGroupTable(group, order, locked, escapeHtml);
+  section.replaceWith(wrapper.firstElementChild);
+}
+
+export function bindPredictionForm(
+  container,
+  getUser,
+  persistGroup,
+  onProgress,
+  isLocked,
+  escapeHtml
+) {
   container.addEventListener("change", (e) => {
     const input = e.target;
     if (input.type !== "radio" || !input.dataset.group) return;
@@ -108,22 +146,13 @@ export function bindPredictionForm(container, getUser, persistGroup, onProgress,
     if (!user || isLocked?.(user)) return;
 
     const groupId = input.dataset.group;
-    const teamId = input.dataset.team;
-    const positionIndex = Number(input.value);
-
-    const current = getOrderForGroup(user.groups, groupId);
-    const next = applyRankSelection(current, teamId, positionIndex);
+    const next = orderFromPositionRadios(container, groupId);
 
     user.groups = { ...user.groups, [groupId]: next };
     persistGroup(groupId, next);
 
-    const section = container.querySelector(`#group-${groupId}`);
-    const status = section?.querySelector(".group-form__status");
-    if (status) {
-      const done = isGroupComplete(next);
-      status.textContent = done ? "Complete" : "Pick all four places";
-      status.classList.toggle("group-form__status--done", done);
-    }
+    const locked = isLocked(user);
+    refreshGroupSection(container, groupId, next, locked, escapeHtml);
 
     onProgress?.();
   });
