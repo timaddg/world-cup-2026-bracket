@@ -32,6 +32,9 @@ import {
   getStoreError,
 } from "./store.js";
 import { syncFromGoogleSheet, syncFromCsvFile } from "./sheet-sync.js";
+import { maybeAutoSyncGroupResults, autoSyncStatusLabel } from "./auto-sync.js";
+import { getResultsApiProvider, isResultsApiConfigured } from "./results-api.js";
+import { syncGroupResultsFromApiAndSave } from "./tournament-sync.js";
 
 const app = document.getElementById("app");
 
@@ -471,6 +474,10 @@ function renderLeaderboard() {
   const rows = buildLeaderboard(getAllUsers(), state);
   const hasResults = Object.keys(state.groupResults || {}).length > 0;
   const playerCount = Object.keys(getAllUsers()).length;
+  const apiConfigured = isResultsApiConfigured();
+  const syncedLabel = state.groupResultsSyncedAt
+    ? `Results synced ${formatDate(state.groupResultsSyncedAt)}${state.groupResultsSource ? ` (${state.groupResultsSource})` : ""}`
+    : "";
 
   app.innerHTML = shell(
     `
@@ -478,15 +485,24 @@ function renderLeaderboard() {
       <h2 class="panel__heading">Leaderboard</h2>
       <p class="panel__text">${playerCount} player(s) in the pool · ${escapeHtml(getBackendLabel())}</p>
       ${
-        isCloudBackend()
-          ? `<div class="btn-row"><button type="button" class="btn btn--ghost" id="btn-refresh-scores">Refresh from server</button></div>`
-          : ""
-      }
-      ${
         !hasResults
-          ? `<p class="panel__text">Everyone appears below once they submit. Enter real group results in <a href="#/admin">Admin</a> to calculate points.</p>`
-          : ""
+          ? `<p class="panel__text">Everyone appears below once they submit. ${escapeHtml(autoSyncStatusLabel())} Manual sync: <a href="#/admin">Admin</a> or below.</p>`
+          : syncedLabel
+            ? `<p class="panel__text">${escapeHtml(syncedLabel)}</p>`
+            : ""
       }
+      <div class="btn-row">
+        ${
+          isCloudBackend()
+            ? `<button type="button" class="btn btn--ghost" id="btn-refresh-scores">Refresh players</button>`
+            : ""
+        }
+        ${
+          apiConfigured
+            ? `<button type="button" class="btn btn--primary" id="btn-sync-api-results">Sync FIFA group results</button>`
+            : ""
+        }
+      </div>
       <div class="table-wrap">
         <table class="leaderboard">
           <thead>
@@ -533,6 +549,21 @@ function renderLeaderboard() {
     await refreshStore();
     render();
   });
+
+  document.getElementById("btn-sync-api-results")?.addEventListener("click", async () => {
+    const btn = document.getElementById("btn-sync-api-results");
+    btn.disabled = true;
+    btn.textContent = "Syncing…";
+    try {
+      await syncGroupResultsFromApiAndSave();
+      alert("Group results updated from API. Leaderboard recalculated.");
+      render();
+    } catch (err) {
+      alert(err.message ?? "Sync failed");
+      btn.disabled = false;
+      btn.textContent = "Sync FIFA group results";
+    }
+  });
 }
 
 function renderAdmin() {
@@ -570,10 +601,25 @@ function renderAdmin() {
       </label>
     </section>
     <section class="panel">
-      <h2 class="panel__heading">Actual group results (JSON)</h2>
-      <p class="panel__text">Object keyed by group id A–L, each value an array of 4 team ids (1st to 4th). Example: <code>{"A":["MEX","RSA","KOR","CZE"]}</code></p>
+      <h2 class="panel__heading">Group results (auto or manual)</h2>
+      <p class="panel__text">
+        Fetch live group tables from <strong>WC2026 API</strong> or API-Football (key in <code>.env</code>)
+        and compare them to each player's picks on the scoreboard.
+      </p>
+      ${
+        isResultsApiConfigured()
+          ? `<button type="button" class="btn btn--primary btn--block" id="btn-sync-api-admin">Fetch & save results from API</button>
+             <p class="panel__text muted">Provider: ${escapeHtml(getResultsApiProvider() ?? "unknown")}. ${escapeHtml(autoSyncStatusLabel())}</p>`
+          : `<p class="panel__text muted">Add <code>VITE_API_FOOTBALL_KEY</code> to <code>.env</code> (<a href="https://wc2026api.com" target="_blank" rel="noopener">WC2026 API</a> or <a href="https://www.api-football.com" target="_blank" rel="noopener">API-Football</a>).</p>`
+      }
+      ${
+        state.groupResultsSyncedAt
+          ? `<p class="panel__text muted">Last API sync: ${formatDate(state.groupResultsSyncedAt)}</p>`
+          : ""
+      }
+      <p class="panel__text">Or paste JSON manually (groups A–L, 4 team ids each, 1st→4th):</p>
       <textarea class="textarea" id="admin-group-results" rows="8">${escapeHtml(JSON.stringify(state.groupResults || {}, null, 2))}</textarea>
-      <button type="button" class="btn btn--ghost btn--block" id="btn-save-group-results">Save group results</button>
+      <button type="button" class="btn btn--ghost btn--block" id="btn-save-group-results">Save manual JSON</button>
     </section>
     <section class="panel">
       <h2 class="panel__heading">Knockout match winners (JSON)</h2>
@@ -592,9 +638,27 @@ function renderAdmin() {
     render();
   });
 
+  document.getElementById("btn-sync-api-admin")?.addEventListener("click", async () => {
+    const btn = document.getElementById("btn-sync-api-admin");
+    btn.disabled = true;
+    btn.textContent = "Fetching…";
+    try {
+      const results = await syncGroupResultsFromApiAndSave();
+      document.getElementById("admin-group-results").value = JSON.stringify(results, null, 2);
+      alert("Saved group results from API. Check Scores tab.");
+      render();
+    } catch (err) {
+      alert(err.message ?? "API sync failed");
+      btn.disabled = false;
+      btn.textContent = "Fetch & save results from API";
+    }
+  });
+
   document.getElementById("btn-save-group-results").addEventListener("click", () => {
     try {
       state.groupResults = JSON.parse(document.getElementById("admin-group-results").value);
+      state.groupResultsSource = "manual";
+      state.groupResultsSyncedAt = Date.now();
       saveTournamentState(state);
       alert("Group results saved.");
     } catch {
@@ -672,6 +736,11 @@ async function boot() {
   if (getStoreError() && !isCloudBackend()) {
     console.warn("Supabase config present but using local storage:", getStoreError());
   }
+
+  await maybeAutoSyncGroupResults(async () => {
+    await syncGroupResultsFromApiAndSave();
+    await refreshStore();
+  });
 
   if (getCurrentUserName() && (location.hash === "" || location.hash === "#")) {
     navigate("predictions");

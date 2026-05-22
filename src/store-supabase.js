@@ -10,6 +10,8 @@ function defaultTournamentState() {
     googleSheetCsvUrl: gameConfig.googleSheetCsvUrl || "",
     lastFormSyncAt: null,
     lastFormSyncCount: 0,
+    groupResultsSyncedAt: null,
+    groupResultsSource: null,
   };
 }
 
@@ -64,6 +66,10 @@ function rowToState(row) {
       ? new Date(row.last_form_sync_at).getTime()
       : null,
     lastFormSyncCount: row.last_form_sync_count ?? 0,
+    groupResultsSyncedAt: row.group_results_synced_at
+      ? new Date(row.group_results_synced_at).getTime()
+      : null,
+    groupResultsSource: row.group_results_source ?? null,
   };
 }
 
@@ -79,6 +85,10 @@ function stateToRow(state) {
       ? new Date(state.lastFormSyncAt).toISOString()
       : null,
     last_form_sync_count: state.lastFormSyncCount ?? 0,
+    group_results_synced_at: state.groupResultsSyncedAt
+      ? new Date(state.groupResultsSyncedAt).toISOString()
+      : null,
+    group_results_source: state.groupResultsSource ?? null,
     updated_at: new Date().toISOString(),
   };
 }

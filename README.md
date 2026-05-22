@@ -28,7 +28,7 @@ Full steps: **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)**
 1. **Home** — Enter a unique display name (one submission per name).
 2. **My picks** — Table form for groups A–L → **Save & submit** (locked forever for that name).
 3. **Scores** — Leaderboard for everyone in the pool.
-4. **Admin** — Enter real group results to calculate points.
+4. **Admin** — Real group results sync daily **Jun 11–27** (API + Vercel cron); manual sync anytime.
 
 ## Customize
 

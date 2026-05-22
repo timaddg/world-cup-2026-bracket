@@ -9,8 +9,17 @@ export const gameConfig = {
    * Example: https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv&gid=0
    */
   googleSheetCsvUrl: "",
+  /** API-Football season for standings (2026 may require paid plan on free tier) */
+  apiFootballSeason: import.meta.env.VITE_API_FOOTBALL_SEASON || "2026",
   groupLockAt: "2026-06-11T00:00:00-04:00",
   knockoutOpensAt: "2026-06-28T00:00:00-04:00",
+  /** Daily API sync window (see lib/auto-sync-dates.mjs + Vercel cron) */
+  autoSync: {
+    start: "2026-06-11",
+    end: "2026-06-27",
+    timezone: "America/New_York",
+    intervalHours: 24,
+  },
   storageKeys: {
     users: "wc2026-users",
     state: "wc2026-tournament-state",

@@ -74,3 +74,16 @@ Deploy to [Vercel](https://vercel.com) or [Netlify](https://netlify.com) (both h
 ## Cost
 
 Supabase **free tier** is enough for a friends pool (thousands of rows, well within limits).
+
+## Auto group results (WC2026 API)
+
+1. Add to `.env`: `VITE_API_FOOTBALL_KEY=wc26_…` (from [wc2026api.com](https://wc2026api.com))
+2. Restart `npm run dev`
+3. **Daily auto-sync** runs **June 11–27, 2026** (America/New_York):
+   - **Vercel:** cron at **6:00 AM ET** (`/api/cron-sync-results`) — works even if nobody opens the app
+   - **Fallback:** first visit each day also syncs if the last sync was 24+ hours ago
+4. **Admin** / **Scores** → manual **Sync** still available anytime
+
+Manual JSON in Admin still works as a backup.
+
+**Deploy on Vercel:** set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_FOOTBALL_KEY`, and optional `CRON_SECRET` (Vercel sets this for cron auth).

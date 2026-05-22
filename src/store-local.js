@@ -22,6 +22,8 @@ function defaultTournamentState() {
     googleSheetCsvUrl: gameConfig.googleSheetCsvUrl || "",
     lastFormSyncAt: null,
     lastFormSyncCount: 0,
+    groupResultsSyncedAt: null,
+    groupResultsSource: null,
   };
 }
 

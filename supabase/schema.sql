@@ -24,6 +24,8 @@ create table if not exists public.tournament (
   google_sheet_csv_url text default '',
   last_form_sync_at timestamptz,
   last_form_sync_count int default 0,
+  group_results_synced_at timestamptz,
+  group_results_source text,
   updated_at timestamptz not null default now()
 );
 
@@ -52,3 +54,7 @@ create policy "tournament_update" on public.tournament for update using (true);
 create policy "tournament_insert" on public.tournament for insert with check (id = 1);
 
 -- Optional: Supabase Dashboard → Database → Publications → supabase_realtime → add "players"
+
+-- If tournament table already exists, run:
+-- alter table public.tournament add column if not exists group_results_synced_at timestamptz;
+-- alter table public.tournament add column if not exists group_results_source text;
