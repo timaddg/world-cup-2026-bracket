@@ -1,0 +1,73 @@
+{
+  "description": "Knockout bracket template. Team slots are filled after the group stage ends.",
+  "rounds": [
+    {
+      "id": "r32",
+      "name": "Round of 32",
+      "matches": [
+        { "id": "r32-1", "home": "Runner-up Group A", "away": "Runner-up Group B" },
+        { "id": "r32-2", "home": "Winner Group E", "away": "3rd Group A/B/C/D/F" },
+        { "id": "r32-3", "home": "Winner Group F", "away": "Runner-up Group C" },
+        { "id": "r32-4", "home": "Winner Group I", "away": "3rd Group C/D/F/G/H" },
+        { "id": "r32-5", "home": "Winner Group D", "away": "3rd Group B/E/F/I/J" },
+        { "id": "r32-6", "home": "Winner Group G", "away": "3rd Group A/E/H/I/J" },
+        { "id": "r32-7", "home": "Winner Group C", "away": "Runner-up Group F" },
+        { "id": "r32-8", "home": "Runner-up Group K", "away": "Runner-up Group L" },
+        { "id": "r32-9", "home": "Winner Group H", "away": "Runner-up Group J" },
+        { "id": "r32-10", "home": "Winner Group A", "away": "3rd Group C/E/F/H/I" },
+        { "id": "r32-11", "home": "Winner Group L", "away": "3rd Group E/H/I/J/K" },
+        { "id": "r32-12", "home": "Winner Group J", "away": "Runner-up Group H" },
+        { "id": "r32-13", "home": "Winner Group B", "away": "Runner-up Group E" },
+        { "id": "r32-14", "home": "Runner-up Group I", "away": "Runner-up Group G" },
+        { "id": "r32-15", "home": "Winner Group K", "away": "3rd Group D/E/I/J/L" },
+        { "id": "r32-16", "home": "Runner-up Group D", "away": "Runner-up Group G" }
+      ]
+    },
+    {
+      "id": "r16",
+      "name": "Round of 16",
+      "matches": [
+        { "id": "r16-1", "home": "Winner r32-2", "away": "Winner r32-1" },
+        { "id": "r16-2", "home": "Winner r32-4", "away": "Winner r32-3" },
+        { "id": "r16-3", "home": "Winner r32-6", "away": "Winner r32-5" },
+        { "id": "r16-4", "home": "Winner r32-8", "away": "Winner r32-7" },
+        { "id": "r16-5", "home": "Winner r32-10", "away": "Winner r32-9" },
+        { "id": "r16-6", "home": "Winner r32-12", "away": "Winner r32-11" },
+        { "id": "r16-7", "home": "Winner r32-14", "away": "Winner r32-13" },
+        { "id": "r16-8", "home": "Winner r32-16", "away": "Winner r32-15" }
+      ]
+    },
+    {
+      "id": "qf",
+      "name": "Quarter-finals",
+      "matches": [
+        { "id": "qf-1", "home": "Winner r16-1", "away": "Winner r16-2" },
+        { "id": "qf-2", "home": "Winner r16-3", "away": "Winner r16-4" },
+        { "id": "qf-3", "home": "Winner r16-5", "away": "Winner r16-6" },
+        { "id": "qf-4", "home": "Winner r16-7", "away": "Winner r16-8" }
+      ]
+    },
+    {
+      "id": "sf",
+      "name": "Semi-finals",
+      "matches": [
+        { "id": "sf-1", "home": "Winner qf-1", "away": "Winner qf-2" },
+        { "id": "sf-2", "home": "Winner qf-3", "away": "Winner qf-4" }
+      ]
+    },
+    {
+      "id": "final",
+      "name": "Final",
+      "matches": [
+        { "id": "final", "home": "Winner sf-1", "away": "Winner sf-2" }
+      ]
+    },
+    {
+      "id": "third",
+      "name": "Third place",
+      "matches": [
+        { "id": "third", "home": "Loser sf-1", "away": "Loser sf-2" }
+      ]
+    }
+  ]
+}

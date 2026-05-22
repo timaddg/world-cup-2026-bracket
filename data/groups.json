@@ -1,0 +1,113 @@
+{
+  "tournament": "FIFA World Cup 2026",
+  "groups": [
+    {
+      "id": "A",
+      "teams": [
+        { "id": "MEX", "name": "Mexico", "host": true },
+        { "id": "RSA", "name": "South Africa" },
+        { "id": "KOR", "name": "South Korea" },
+        { "id": "CZE", "name": "Czech Republic" }
+      ]
+    },
+    {
+      "id": "B",
+      "teams": [
+        { "id": "CAN", "name": "Canada", "host": true },
+        { "id": "BIH", "name": "Bosnia and Herzegovina" },
+        { "id": "QAT", "name": "Qatar" },
+        { "id": "SUI", "name": "Switzerland" }
+      ]
+    },
+    {
+      "id": "C",
+      "teams": [
+        { "id": "BRA", "name": "Brazil" },
+        { "id": "MAR", "name": "Morocco" },
+        { "id": "HAI", "name": "Haiti" },
+        { "id": "SCO", "name": "Scotland" }
+      ]
+    },
+    {
+      "id": "D",
+      "teams": [
+        { "id": "USA", "name": "United States", "host": true },
+        { "id": "PAR", "name": "Paraguay" },
+        { "id": "AUS", "name": "Australia" },
+        { "id": "TUR", "name": "Turkey" }
+      ]
+    },
+    {
+      "id": "E",
+      "teams": [
+        { "id": "GER", "name": "Germany" },
+        { "id": "CUW", "name": "Curaçao" },
+        { "id": "CIV", "name": "Ivory Coast" },
+        { "id": "ECU", "name": "Ecuador" }
+      ]
+    },
+    {
+      "id": "F",
+      "teams": [
+        { "id": "NED", "name": "Netherlands" },
+        { "id": "JPN", "name": "Japan" },
+        { "id": "SWE", "name": "Sweden" },
+        { "id": "TUN", "name": "Tunisia" }
+      ]
+    },
+    {
+      "id": "G",
+      "teams": [
+        { "id": "BEL", "name": "Belgium" },
+        { "id": "EGY", "name": "Egypt" },
+        { "id": "IRN", "name": "Iran" },
+        { "id": "NZL", "name": "New Zealand" }
+      ]
+    },
+    {
+      "id": "H",
+      "teams": [
+        { "id": "ESP", "name": "Spain" },
+        { "id": "CPV", "name": "Cape Verde" },
+        { "id": "KSA", "name": "Saudi Arabia" },
+        { "id": "URU", "name": "Uruguay" }
+      ]
+    },
+    {
+      "id": "I",
+      "teams": [
+        { "id": "FRA", "name": "France" },
+        { "id": "SEN", "name": "Senegal" },
+        { "id": "IRQ", "name": "Iraq" },
+        { "id": "NOR", "name": "Norway" }
+      ]
+    },
+    {
+      "id": "J",
+      "teams": [
+        { "id": "ARG", "name": "Argentina" },
+        { "id": "ALG", "name": "Algeria" },
+        { "id": "AUT", "name": "Austria" },
+        { "id": "JOR", "name": "Jordan" }
+      ]
+    },
+    {
+      "id": "K",
+      "teams": [
+        { "id": "POR", "name": "Portugal" },
+        { "id": "COD", "name": "DR Congo" },
+        { "id": "UZB", "name": "Uzbekistan" },
+        { "id": "COL", "name": "Colombia" }
+      ]
+    },
+    {
+      "id": "L",
+      "teams": [
+        { "id": "ENG", "name": "England" },
+        { "id": "CRO", "name": "Croatia" },
+        { "id": "GHA", "name": "Ghana" },
+        { "id": "PAN", "name": "Panama" }
+      ]
+    }
+  ]
+}
