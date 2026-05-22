@@ -39,6 +39,7 @@ import { syncFromGoogleSheet, syncFromCsvFile } from "./sheet-sync.js";
 import { maybeAutoSyncGroupResults, autoSyncStatusLabel } from "./auto-sync.js";
 import { getResultsApiProvider, isResultsApiConfigured } from "./results-api.js";
 import { syncGroupResultsFromApiAndSave } from "./tournament-sync.js";
+import { downloadPicksCsv } from "./export-picks.js";
 
 const app = document.getElementById("app");
 
@@ -307,7 +308,9 @@ function renderPredictionForm() {
                 Save & submit my picks (${done}/${total})
               </button>`
             : submitted
-              ? `<p class="notice notice--success">Submitted and locked. This display name cannot pick again.</p>`
+              ? `<p class="notice notice--success">Submitted and locked. This display name cannot pick again.</p>
+                 <p class="panel__text muted">Refresh the page? Enter the same name on Home to view your picks again.</p>
+                 <button type="button" class="btn btn--ghost btn--block" id="btn-download-picks-csv">Download my picks (CSV)</button>`
               : isGroupStageLocked()
                 ? `<p class="notice">Group stage is closed — no new submissions.</p>`
                 : ""
@@ -339,6 +342,10 @@ function renderPredictionForm() {
     areGroupPicksLocked,
     escapeHtml
   );
+
+  document.getElementById("btn-download-picks-csv")?.addEventListener("click", () => {
+    downloadPicksCsv(user);
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
