@@ -1,6 +1,13 @@
 import { isSupabaseConfigured } from "./supabase.js";
+import {
+  clearSession,
+  getSessionUserName,
+  setSessionUserName,
+} from "./session.js";
 import * as local from "./store-local.js";
 import * as remote from "./store-supabase.js";
+
+export { clearSession, getDraftGroups, setDraftGroup, clearDraftGroups } from "./session.js";
 
 let activeBackend = local;
 let initError = null;
@@ -46,16 +53,21 @@ function bind(name) {
 
 export const getTournamentState = bind("getTournamentState");
 export const saveTournamentState = bind("saveTournamentState");
-export const getCurrentUserName = bind("getCurrentUserName");
-export const setCurrentUserName = bind("setCurrentUserName");
+export function getCurrentUserName() {
+  return getSessionUserName();
+}
+
+export function setCurrentUserName(name) {
+  setSessionUserName(name);
+}
 export const getAllUsers = bind("getAllUsers");
 export const getUserEntry = bind("getUserEntry");
 export const hasSubmittedGroups = bind("hasSubmittedGroups");
 export const areGroupPicksLocked = bind("areGroupPicksLocked");
 export const saveUserEntry = bind("saveUserEntry");
 
-export function submitGroupPicksOnce(displayName) {
-  return Promise.resolve(activeBackend.submitGroupPicksOnce(displayName));
+export function submitGroupPicksOnce(displayName, groups) {
+  return Promise.resolve(activeBackend.submitGroupPicksOnce(displayName, groups));
 }
 
 export const listAllUsers = bind("listAllUsers");

@@ -12,6 +12,10 @@ import {
   getCurrentUserName,
   setCurrentUserName,
   getUserEntry,
+  clearSession,
+  clearDraftGroups,
+  setDraftGroup,
+  getDraftGroups,
   saveUserEntry,
   listAllUsers,
   getAllUsers,
@@ -60,7 +64,18 @@ function ensureUser() {
     navigate("home");
     return null;
   }
-  return getUserEntry(name) || saveUserEntry(name, {});
+
+  const saved = getUserEntry(name);
+  if (saved?.groupsSubmittedAt) return saved;
+
+  return {
+    displayName: name,
+    groups: { ...getDraftGroups() },
+    groupsSubmittedAt: null,
+    knockout: saved?.knockout ?? {},
+    knockoutSubmittedAt: saved?.knockoutSubmittedAt ?? null,
+    createdAt: saved?.createdAt ?? Date.now(),
+  };
 }
 
 function formatDate(iso) {
@@ -134,25 +149,25 @@ function shell(content, activeNav = "") {
     </nav>
     <main class="main">${content}</main>
     <footer class="footer">
-      <p>Storage: <strong>${escapeHtml(getBackendLabel())}</strong>${isCloudBackend() ? " — same picks on every phone." : " — use Export/Import to merge devices."}</p>
+      <p>Storage: <strong>${escapeHtml(getBackendLabel())}</strong>${isCloudBackend() ? " — submitted picks sync for everyone; drafts clear on refresh until you submit." : " — use Export/Import to merge devices."}</p>
     </footer>
   `;
 }
 
 function renderHome() {
-  const name = getCurrentUserName();
+  clearSession();
   const players = listAllUsers();
 
   app.innerHTML = shell(
     `
     <section class="panel">
       <h2 class="panel__heading">Enter your name</h2>
-      <p class="panel__text">Pick a <strong>unique</strong> display name. Each name can submit picks <strong>once</strong> — no edits after that.</p>
+      <p class="panel__text">Pick a <strong>unique</strong> display name. Your name and picks reset if you refresh — they are only saved when you <strong>Save & submit</strong> on My picks.</p>
       ${getStoreError() && !isCloudBackend() ? `<p class="name-hint">Cloud sync unavailable: ${escapeHtml(getStoreError())}. Using this device only.</p>` : ""}
       <form class="form" id="name-form">
         <label class="form__field">
           <span class="form__label">Display name</span>
-          <input type="text" id="input-display-name" value="${escapeHtml(name)}" maxlength="32" required placeholder="e.g. Amit" autocomplete="off" />
+          <input type="text" id="input-display-name" value="" maxlength="32" required placeholder="e.g. Amit" autocomplete="off" />
         </label>
         <p class="name-hint muted" id="name-hint" hidden></p>
         <button type="submit" class="btn btn--primary" id="btn-name-continue">Continue</button>
@@ -180,7 +195,6 @@ function renderHome() {
         <li>For each group, choose <strong>1st / 2nd / 3rd / 4th</strong> for every team in the table.</li>
         <li>Submit once — picks are <strong>locked</strong> for that name and appear on <strong>Scores</strong>.</li>
       </ol>
-      ${name ? `<a href="#/predictions" class="btn btn--primary btn--block">Go to my picks</a>` : ""}
       <a href="#/leaderboard" class="btn btn--ghost btn--block" style="margin-top:0.5rem">View scoreboard</a>
     </section>
     <section class="panel">
@@ -224,9 +238,7 @@ function renderHome() {
     const value = nameInput.value.trim();
     if (!value) return;
     setCurrentUserName(value);
-    if (!getUserEntry(value)) {
-      saveUserEntry(value, { displayName: value });
-    }
+    clearDraftGroups();
     navigate("predictions");
   });
 
@@ -282,7 +294,7 @@ function renderPredictionForm() {
         ${
           submitted
             ? "Your picks are final for this display name and cannot be changed."
-            : "Pick one team per place in each group — only one 1st, one 2nd, one 3rd, and one 4th. Each team gets exactly one position."
+            : "Pick one team per place in each group — only one 1st, one 2nd, one 3rd, and one 4th. Picks stay in this tab until you submit; refresh clears them. Submit once to save to the pool."
         }
       </p>
       <div id="group-tables">
@@ -313,10 +325,8 @@ function renderPredictionForm() {
     () => user,
     (groupId, order) => {
       if (areGroupPicksLocked(user)) return;
-      const updated = saveUserEntry(getCurrentUserName(), {
-        groups: { ...user.groups, [groupId]: order },
-      });
-      user.groups = updated.groups;
+      setDraftGroup(groupId, order);
+      user.groups = { ...getDraftGroups() };
     },
     () => {
       const { done: d, total: t } = countFormProgress(user.groups);
@@ -342,7 +352,7 @@ function renderPredictionForm() {
       return;
     }
     const name = getCurrentUserName();
-    const result = await submitGroupPicksOnce(name);
+    const result = await submitGroupPicksOnce(name, user.groups);
     if (!result.ok) {
       if (result.reason === "already_submitted") {
         alert("This display name already submitted picks. Use a different name on Home.");
@@ -742,11 +752,7 @@ async function boot() {
     await refreshStore();
   });
 
-  if (getCurrentUserName() && (location.hash === "" || location.hash === "#")) {
-    navigate("predictions");
-  } else {
-    render();
-  }
+  render();
 }
 
 boot();

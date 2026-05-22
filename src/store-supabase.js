@@ -156,14 +156,6 @@ export function saveTournamentState(state) {
   });
 }
 
-export function getCurrentUserName() {
-  return localStorage.getItem(gameConfig.storageKeys.currentUser) || "";
-}
-
-export function setCurrentUserName(name) {
-  localStorage.setItem(gameConfig.storageKeys.currentUser, name.trim());
-}
-
 export function getAllUsers() {
   return { ...usersCache };
 }
@@ -205,23 +197,21 @@ export function saveUserEntry(displayName, patch) {
   const next = { ...existing, ...patch, displayName: displayName.trim() };
   usersCache[key] = next;
 
-  upsertPlayer(next).catch((err) => {
-    console.error("Failed to save player", err);
-    alert(`Could not save to server: ${err.message}`);
-  });
+  if (existing.groupsSubmittedAt || patch.groupsSubmittedAt) {
+    upsertPlayer(next).catch((err) => {
+      console.error("Failed to save player", err);
+      alert(`Could not save to server: ${err.message}`);
+    });
+  }
 
   return next;
 }
 
-export async function submitGroupPicksOnce(displayName) {
+export async function submitGroupPicksOnce(displayName, groups) {
   const key = nameKey(displayName);
-  const entry = getUserEntry(displayName);
+  const existing = getUserEntry(displayName);
 
-  if (!entry) {
-    return { ok: false, reason: "No picks found. Complete the form first." };
-  }
-
-  if (entry.groupsSubmittedAt) {
+  if (existing?.groupsSubmittedAt) {
     return { ok: false, reason: "already_submitted" };
   }
 
@@ -229,14 +219,26 @@ export async function submitGroupPicksOnce(displayName) {
     return { ok: false, reason: "Group stage is locked." };
   }
 
-  const next = { ...entry, groupsSubmittedAt: Date.now() };
+  if (!groups || typeof groups !== "object") {
+    return { ok: false, reason: "No picks found. Complete the form first." };
+  }
+
+  const next = {
+    displayName: displayName.trim(),
+    createdAt: existing?.createdAt ?? Date.now(),
+    groups,
+    groupsSubmittedAt: Date.now(),
+    knockout: existing?.knockout ?? {},
+    knockoutSubmittedAt: existing?.knockoutSubmittedAt ?? null,
+  };
+
   usersCache[key] = next;
 
   try {
     await upsertPlayer(next);
     return { ok: true, entry: next };
   } catch (err) {
-    usersCache[key] = { ...entry, groupsSubmittedAt: null };
+    delete usersCache[key];
     const msg = String(err.message ?? "");
     if (msg.includes("duplicate") || msg.includes("unique")) {
       return { ok: false, reason: "already_submitted" };

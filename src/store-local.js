@@ -39,14 +39,6 @@ export function saveTournamentState(state) {
   writeJson(gameConfig.storageKeys.state, state);
 }
 
-export function getCurrentUserName() {
-  return localStorage.getItem(gameConfig.storageKeys.currentUser) || "";
-}
-
-export function setCurrentUserName(name) {
-  localStorage.setItem(gameConfig.storageKeys.currentUser, name.trim());
-}
-
 export function getAllUsers() {
   return readJson(gameConfig.storageKeys.users, {});
 }
@@ -92,19 +84,19 @@ export function saveUserEntry(displayName, patch) {
   }
 
   users[key] = { ...existing, ...patch, displayName: displayName.trim() };
-  saveAllUsers(users);
+
+  if (existing.groupsSubmittedAt || patch.groupsSubmittedAt) {
+    saveAllUsers(users);
+  }
+
   return users[key];
 }
 
-export function submitGroupPicksOnce(displayName) {
+export function submitGroupPicksOnce(displayName, groups) {
   const key = displayName.trim().toLowerCase();
-  const entry = getUserEntry(displayName);
+  const existing = getUserEntry(displayName);
 
-  if (!entry) {
-    return { ok: false, reason: "No picks found. Complete the form first." };
-  }
-
-  if (entry.groupsSubmittedAt) {
+  if (existing?.groupsSubmittedAt) {
     return { ok: false, reason: "already_submitted" };
   }
 
@@ -112,8 +104,19 @@ export function submitGroupPicksOnce(displayName) {
     return { ok: false, reason: "Group stage is locked." };
   }
 
+  if (!groups || typeof groups !== "object") {
+    return { ok: false, reason: "No picks found. Complete the form first." };
+  }
+
   const users = getAllUsers();
-  users[key] = { ...entry, groupsSubmittedAt: Date.now() };
+  users[key] = {
+    displayName: displayName.trim(),
+    createdAt: existing?.createdAt ?? Date.now(),
+    groups,
+    groupsSubmittedAt: Date.now(),
+    knockout: existing?.knockout ?? {},
+    knockoutSubmittedAt: existing?.knockoutSubmittedAt ?? null,
+  };
   saveAllUsers(users);
   return { ok: true, entry: users[key] };
 }
