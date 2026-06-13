@@ -1,0 +1,29 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# WC2026 / API-Football standings proxy (used by Admin & Scores sync)
+[[redirects]]
+  from = "/api/wc-standings"
+  to = "/.netlify/functions/wc-standings"
+  status = 200
+  force = true
+
+# Manual or external trigger for daily sync (optional)
+[[redirects]]
+  from = "/api/cron-sync-results"
+  to = "/.netlify/functions/cron-sync-results"
+  status = 200
+  force = true
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Daily at 10:00 UTC (~6:00 AM ET). Skips outside Jun 11–27 in function code.
+[[scheduled_functions]]
+  name = "cron-sync-results"
+  schedule = "0 10 * * *"

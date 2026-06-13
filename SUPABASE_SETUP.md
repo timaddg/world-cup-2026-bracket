@@ -15,6 +15,8 @@ Follow these steps once. After that, every phone using your deployed site shares
 3. Copy the entire contents of [`supabase/schema.sql`](./supabase/schema.sql) and paste it in.
 4. Click **Run**. You should see “Success”.
 
+**Already created the tables earlier?** Also run [`supabase/migration-group-results-sync.sql`](./supabase/migration-group-results-sync.sql) so daily sync can record last sync time.
+
 ## 3. Get your API keys
 
 1. **Project Settings** (gear icon) → **API**.
@@ -49,12 +51,29 @@ The footer should say **Storage: Supabase (shared)**.
 
 ## 5. Deploy (so friends can use it on their phones)
 
-Deploy to [Vercel](https://vercel.com) or [Netlify](https://netlify.com) (both have free tiers):
+### Netlify (e.g. wc2026bayarea.netlify.app)
 
-1. Push this folder to GitHub.
-2. Import the repo in Vercel/Netlify.
-3. Add the same two environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
-4. Deploy and share the URL with friends.
+1. Push this folder to GitHub and connect the repo in [Netlify](https://netlify.com).
+2. Build settings are in [`netlify.toml`](./netlify.toml) (`npm run build`, publish `dist`).
+3. **Site configuration → Environment variables** — add:
+
+| Variable | Required for |
+|----------|----------------|
+| `VITE_SUPABASE_URL` | Picks + leaderboard |
+| `VITE_SUPABASE_ANON_KEY` | Picks + leaderboard |
+| `VITE_API_FOOTBALL_KEY` | Sync button in app (shows in build) |
+| `API_FOOTBALL_KEY` | Same WC2026 key for **server functions** (recommended — keeps key off client if you remove `VITE_` later) |
+
+4. **Trigger deploy → Clear cache and deploy** (env vars are baked in at build time).
+5. Footer should say **Storage: Supabase (shared)**.
+6. **Admin** or **Scores** → **Sync FIFA group results** should work (`/api/wc-standings` via Netlify Function).
+7. **Daily auto-sync** runs at **10:00 UTC** (~6:00 AM ET) Jun 11–27 via Netlify scheduled function.
+
+### Vercel
+
+1. Import the repo in [Vercel](https://vercel.com).
+2. Add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_FOOTBALL_KEY`, optional `CRON_SECRET`.
+3. Deploy — cron is configured in [`vercel.json`](./vercel.json).
 
 ## How it works
 
@@ -80,10 +99,11 @@ Supabase **free tier** is enough for a friends pool (thousands of rows, well wit
 1. Add to `.env`: `VITE_API_FOOTBALL_KEY=wc26_…` (from [wc2026api.com](https://wc2026api.com))
 2. Restart `npm run dev`
 3. **Daily auto-sync** runs **June 11–27, 2026** (America/New_York):
-   - **Vercel:** cron at **6:00 AM ET** (`/api/cron-sync-results`) — works even if nobody opens the app
+   - **Netlify:** scheduled function at **10:00 UTC** (~6:00 AM ET)
+   - **Vercel:** cron at **10:00 UTC** on June 11–27
    - **Fallback:** first visit each day also syncs if the last sync was 24+ hours ago
 4. **Admin** / **Scores** → manual **Sync** still available anytime
 
 Manual JSON in Admin still works as a backup.
 
-**Deploy on Vercel:** set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_FOOTBALL_KEY`, and optional `CRON_SECRET` (Vercel sets this for cron auth).
+**Troubleshooting sync:** Run [`supabase/migration-group-results-sync.sql`](./supabase/migration-group-results-sync.sql). On Netlify, confirm `/api/wc-standings?group=A` returns JSON (not 404).
